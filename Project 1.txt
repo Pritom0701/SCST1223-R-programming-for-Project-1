@@ -1,0 +1,423 @@
+# ==================================================================================
+# SCST1123 Project 1 - Group: UNOVA
+# Statistical Analysis of Daily Water Consumption Patterns Among University Students
+# ==================================================================================
+
+data <- read.csv("D:\\2nd Semester\\PROBABILITY AND STATISTICAL DATA ANALYSIS\\Project_1.csv", header = TRUE, stringsAsFactors = FALSE)
+
+View(data)
+
+# ============================================================
+# --- Rename Columns for Easier Reference ---
+# ============================================================
+colnames(data) <- c(
+  "Name", "Gender", "Age", "University", "Country",
+  "Student.Status", "Water.Intake", "Dehydration.Freq",
+  "Time.Gap", "Morning.Drink", "After.Meals", "Before.Sleep",
+  "Carry.Bottle", "Campus.Water.Access", "Lecture.Drink.Freq",
+  "Weather.Effect", "Concentration.Effect", "Headache.Freq",
+  "Skin.Satisfaction", "Productivity.Hydrated", "Willingness.Improve"
+)
+
+# ============================================================
+# --- Clean & Convert Columns ---
+# ============================================================
+data$Water.Intake         <- as.numeric(data$Water.Intake)
+data$Time.Gap             <- as.numeric(data$Time.Gap)
+data$Dehydration.Freq     <- as.numeric(data$Dehydration.Freq)
+data$Headache.Freq        <- as.numeric(data$Headache.Freq)
+data$Skin.Satisfaction    <- as.numeric(data$Skin.Satisfaction)
+data$Concentration.Effect <- as.numeric(data$Concentration.Effect)
+data$Weather.Effect       <- as.numeric(data$Weather.Effect)
+data$Willingness.Improve  <- as.numeric(data$Willingness.Improve)
+
+# Convert categorical columns to factors so table() works reliably
+data$Gender         <- factor(data$Gender)
+data$Country        <- factor(data$Country)
+data$Student.Status <- factor(data$Student.Status)
+data$Morning.Drink  <- factor(data$Morning.Drink)
+data$After.Meals    <- factor(data$After.Meals)
+data$Before.Sleep   <- factor(data$Before.Sleep)
+data$Carry.Bottle   <- factor(data$Carry.Bottle)
+
+
+# ============================================================
+# 1. WATER CONSUMPTION BY GENDER
+# ============================================================
+gender_counts <- table(data$Gender)
+gender_pct    <- round(100 * gender_counts / sum(gender_counts), 1)
+
+windows()
+pie(gender_counts,
+    main   = "Water Consumption by Gender",
+    col    = c("lightpink", "lightblue"),
+    labels = paste(names(gender_counts), "-", gender_pct, "%"))
+
+# ============================================================
+# 2. DAILY HYDRATION HABITS (MORNING, AFTER MEALS, BEFORE SLEEP)
+# ============================================================
+morning_counts <- table(data$Morning.Drink)
+meals_counts   <- table(data$After.Meals)
+sleep_counts   <- table(data$Before.Sleep)
+
+morning_pct <- round(100 * morning_counts / sum(morning_counts), 1)
+meals_pct   <- round(100 * meals_counts   / sum(meals_counts),   1)
+sleep_pct   <- round(100 * sleep_counts   / sum(sleep_counts),   1)
+
+windows()
+pie(morning_counts,
+    main   = "Do Students Drink Water After Waking Up?",
+    col    = c("lightcoral", "lightgreen"),
+    labels = paste(names(morning_counts), "-", morning_pct, "%"))
+
+windows()
+pie(meals_counts,
+    main   = "Do Students Drink Water After Meals?",
+    col    = c("lightcoral", "lightgreen"),
+    labels = paste(names(meals_counts), "-", meals_pct, "%"))
+
+windows()
+pie(sleep_counts,
+    main   = "Do Students Drink Water Before Sleeping?",
+    col    = c("lightcoral", "lightgreen"),
+    labels = paste(names(sleep_counts), "-", sleep_pct, "%"))
+
+
+# ============================================================
+# 3. WEATHER PERCEPTION vs WATER CONSUMPTION
+# ============================================================
+weather_counts <- table(data$Weather.Effect)
+weather_pct    <- round(100 * weather_counts / sum(weather_counts), 1)
+max_val        <- max(weather_pct)
+
+windows()
+barplot(weather_pct,
+        names.arg = names(weather_counts),
+        main      = "Does Weather Affect Water Consumption?",
+        xlab      = "Weather Effect Level (1 = No Effect, 5 = Strong Effect)",
+        ylab      = "Percentage of Students (%)",
+        col       = rainbow(length(weather_counts)),
+        ylim      = c(0, max_val + 40))
+
+
+# ============================================================
+#4. WATER INTAKE: BOTTLE CARRIERS vs NON-CARRIERS
+# ============================================================
+bottle_counts <- table(data$Carry.Bottle)
+bottle_pct    <- round(100 * bottle_counts / sum(bottle_counts), 1)
+
+w
+indows()
+pie(bottle_counts,
+    main   = "Students Who Carry a Water Bottle to University",
+    col    = c("lightcoral", "lightblue"),
+    labels = paste(names(bottle_counts), "-", bottle_pct, "%"))
+
+
+# ============================================================
+# 5. WILLINGNESS TO IMPROVE vs DEHYDRATION STATUS
+# ============================================================
+median_dehy             <- median(data$Dehydration.Freq, na.rm = TRUE)
+data$Dehydration.Status <- ifelse(data$Dehydration.Freq <= median_dehy,
+                                  "Low Dehydration", "High Dehydration")
+
+cross_tab     <- table(data$Willingness.Improve, data$Dehydration.Status)
+cross_tab_pct <- round(100 * prop.table(cross_tab, margin = 2), 1)
+max_val       <- max(cross_tab_pct)
+
+cat("\n===== Cross-Tabulation: Willingness to Improve vs Dehydration Status =====\n")
+cat("Rows = Willingness to Improve (1 = Not Willing, 5 = Very Willing)\n")
+cat("Cols = Dehydration Status (Low vs High)\n")
+print(cross_tab)
+cat("\nColumn Percentages (%):\n")
+print(cross_tab_pct)
+
+bar_colors <- c("#d9534f", "#f0ad4e", "#f7e25a", "#5bc0de", "#5cb85c")
+
+windows()
+par(mar = c(6, 5, 5, 2), bg = "white")
+
+bp <- barplot(cross_tab_pct,
+              beside = TRUE,
+              col    = bar_colors,
+              ylim   = c(0, max_val + 18),
+              border = "white",
+              axes   = FALSE,
+              main   = "",
+              xlab   = "",
+              ylab   = "")
+
+# Custom axes
+axis(2, las = 1, col = "gray60", col.axis = "gray30", cex.axis = 0.9)
+
+# Horizontal gridlines behind bars
+abline(h   = seq(0, max_val + 15, by = 5),
+       col = "gray90", lty = 1, lwd = 0.8)
+
+# Redraw bars on top of gridlines
+barplot(cross_tab_pct,
+        beside = TRUE,
+        col    = bar_colors,
+        border = "white",
+        ylim   = c(0, max_val + 18),
+        add    = TRUE,
+        axes   = FALSE)
+
+# Value labels on top of each bar
+for (i in seq_along(bp)) {
+  text(x      = bp[i],
+       y      = cross_tab_pct[i] + 1.2,
+       labels = paste0(cross_tab_pct[i], "%"),
+       cex    = 0.78,
+       col    = "gray20",
+       font   = 2)
+}
+
+# Title and axis labels
+title(main     = "Willingness to Improve Hydration Habits\nby Dehydration Status",
+      cex.main = 1.3, font.main = 2, col.main = "gray15", line = 2)
+mtext("Dehydration Status",         side = 1, line = 4,   cex = 1.0, col = "gray30")
+mtext("Percentage of Students (%)", side = 2, line = 3.5, cex = 1.0, col = "gray30")
+
+# Legend with descriptive labels
+legend("topright",
+       legend    = paste("Level", rownames(cross_tab_pct),
+                         c("(Not Willing)", "(Slightly)", "(Neutral)", "(Willing)", "(Very Willing)")),
+       fill      = bar_colors,
+       border    = "white",
+       bty       = "n",
+       cex       = 0.82,
+       title     = "Willingness to Improve",
+       title.col = "gray20")
+
+# Reset margins to default
+par(mar = c(5, 4, 4, 2))
+
+
+
+# ============================================================
+# 6. DESCRIPTIVE STATISTICS OF DAILY WATER CONSUMPTION
+# ============================================================
+mean_water   <- mean(data$Water.Intake,   na.rm = TRUE)
+median_water <- median(data$Water.Intake, na.rm = TRUE)
+mode_water   <- as.numeric(names(sort(table(data$Water.Intake), decreasing = TRUE)[1]))
+sd_water     <- sd(data$Water.Intake,     na.rm = TRUE)
+var_water    <- var(data$Water.Intake,    na.rm = TRUE)
+range_water  <- range(data$Water.Intake,  na.rm = TRUE)
+iqr_water    <- IQR(data$Water.Intake,    na.rm = TRUE)
+
+cat("\n===== Descriptive Statistics: Daily Water Consumption =====\n")
+cat("Mean:           ", round(mean_water,   3), "liters\n")
+cat("Median:         ", round(median_water, 3), "liters\n")
+cat("Mode:           ", mode_water,             "liters\n")
+cat("Std Deviation:  ", round(sd_water,     3), "liters\n")
+cat("Variance:       ", round(var_water,    3), "\n")
+cat("Range:          ", range_water[1], "to", range_water[2], "liters\n")
+cat("IQR:            ", iqr_water,             "liters\n")
+
+freqs    <- hist(data$Water.Intake, plot = FALSE)$counts
+max_freq <- max(freqs)
+
+windows()
+hist(data$Water.Intake,
+     main   = "Frequency Distribution of Daily Water Consumption",
+     xlab   = "Daily Water Intake (liters)",
+     ylab   = "Frequency",
+     col    = "lightblue",
+     border = "white",
+     ylim   = c(0, max_freq + 5))
+
+
+# ============================================================
+# 7. HYDRATION HABITS ACROSS COUNTRIES OF STUDY
+# ============================================================
+windows()
+boxplot(Water.Intake ~ Country, data = data,
+        main   = "Water Consumption Across Countries of Study",
+        xlab   = "Country of Study",
+        ylab   = "Daily Water Intake (liters)",
+        col    = rainbow(length(levels(data$Country))),
+        border = "gray30")
+
+
+# ============================================================
+# 8. WATER INTAKE vs DEHYDRATION FREQUENCY
+# ============================================================
+cat("\n===== Stem-and-Leaf: Daily Water Consumption (liters) =====\n")
+stem(data$Water.Intake)
+
+cat("\n===== Mean Water Intake by Dehydration Frequency Level =====\n")
+dehy_summary <- aggregate(Water.Intake ~ Dehydration.Freq, data, mean)
+dehy_summary$Mean.Intake <- round(dehy_summary$Water.Intake, 2)
+print(dehy_summary[, c("Dehydration.Freq", "Mean.Intake")])
+
+
+
+# ============================================================
+# 9. DEHYDRATION vs HEADACHE OCCURRENCE
+# ============================================================
+levels_scale  <- 1:5
+dehy_freq     <- table(factor(data$Dehydration.Freq, levels = levels_scale))
+headache_freq <- table(factor(data$Headache.Freq,    levels = levels_scale))
+
+dehy_pct     <- round(100 * dehy_freq     / sum(dehy_freq),     1)
+headache_pct <- round(100 * headache_freq / sum(headache_freq), 1)
+
+combined <- rbind(dehy_pct, headache_pct)
+rownames(combined) <- c("Dehydration Frequency", "Headache Occurrence")
+max_val <- max(combined)
+
+windows()
+barplot(combined,
+        beside      = TRUE,
+        col         = c("salmon", "mediumpurple"),
+        main        = "Dehydration Frequency vs Headache Occurrence",
+        xlab        = "Likert Scale (1 = Never, 5 = Very Often)",
+        ylab        = "Percentage of Students (%)",
+        ylim        = c(0, max_val + 5),
+        legend.text = rownames(combined),
+        args.legend = list(x = "topright", bty = "n"))
+
+
+
+# ============================================================
+# 10. WATER INTAKE vs SKIN CONDITION SATISFACTION
+# ============================================================
+windows()
+boxplot(Water.Intake ~ Skin.Satisfaction, data = data,
+        main   = "Water Intake by Skin Condition Satisfaction Level",
+        xlab   = "Skin Satisfaction (1 = Very Unsatisfied, 5 = Very Satisfied)",
+        ylab   = "Daily Water Intake (liters)",
+        col    = rainbow(5),
+        border = "gray30")
+
+
+
+# ============================================================
+# 11. WATER INTAKE vs CONCENTRATION LEVELS
+# ============================================================
+conc_water             <- aggregate(Water.Intake ~ Concentration.Effect, data, mean)
+conc_water$Mean.Intake <- round(conc_water$Water.Intake, 2)
+max_val                <- max(conc_water$Mean.Intake)
+
+cor_conc <- cor(data$Water.Intake, data$Concentration.Effect, use = "complete.obs")
+cat("\n===== Correlation: Water Intake vs Concentration =====\n")
+cat("Pearson Correlation Coefficient:", round(cor_conc, 3), "\n")
+
+windows()
+barplot(conc_water$Mean.Intake,
+        names.arg = conc_water$Concentration.Effect,
+        main      = "Average Water Intake by Concentration Effect Level",
+        xlab      = "Concentration Effect (1 = No Effect, 5 = Very Strong Effect)",
+        ylab      = "Mean Daily Water Intake (liters)",
+        col       = rainbow(nrow(conc_water)),
+        ylim      = c(0, max_val + 1))
+
+
+
+# ============================================================
+# 12. TIME GAP BETWEEN DRINKING vs DEHYDRATION FREQUENCY
+# ============================================================
+
+# Define upper boundaries of each time gap interval
+tg_breaks     <- c(30, 60, 120, 400)
+tg_labels     <- c("<=30 min", "31-60 min", "61-120 min", ">120 min")
+
+data$Time.Gap.Group <- cut(data$Time.Gap,
+                           breaks = c(0, 30, 60, 120, Inf),
+                           labels = tg_labels)
+
+# Frequency and cumulative frequency per time gap group
+tg_freq       <- table(data$Time.Gap.Group)
+tg_cum_freq   <- cumsum(tg_freq)
+tg_cum_pct    <- round(100 * tg_cum_freq / sum(tg_freq), 1)
+
+# Print frequency table for reference
+cat("\n===== Analysis 13: Time Gap Between Drinking vs Dehydration Frequency =====\n")
+freq_tg <- data.frame(
+  Time.Gap.Group      = tg_labels,
+  Frequency           = as.vector(tg_freq),
+  Cumulative.Freq     = as.vector(tg_cum_freq),
+  Cumulative.Pct      = as.vector(tg_cum_pct)
+)
+print(freq_tg, row.names = FALSE)
+
+# Ogive uses upper class boundaries on x-axis, starting from 0
+ogive_x <- c(0, tg_breaks)
+ogive_y <- c(0, as.vector(tg_cum_pct))
+
+windows()
+par(mar = c(6, 5, 5, 2), bg = "white")
+
+# Base plot
+plot(ogive_x, ogive_y,
+     type = "o",
+     pch  = 19,
+     cex  = 1.3,
+     col  = "steelblue",
+     lwd  = 2,
+     main = "",
+     xlab = "",
+     ylab = "",
+     xlim = c(0, 420),
+     ylim = c(0, 115),
+     axes = FALSE)
+
+# Filled area under the curve
+polygon(c(ogive_x, rev(ogive_x)),
+        c(ogive_y, rep(0, length(ogive_y))),
+        col    = adjustcolor("steelblue", alpha.f = 0.15),
+        border = NA)
+
+# Gridlines
+abline(h   = seq(0, 100, by = 25),
+       col = "gray88", lty = 2, lwd = 0.9)
+abline(v   = tg_breaks,
+       col = "gray88", lty = 2, lwd = 0.9)
+
+# Redraw line and points on top of gridlines
+lines(ogive_x, ogive_y, col = "steelblue", lwd = 2)
+points(ogive_x, ogive_y, pch = 19, cex = 1.3, col = "steelblue")
+
+# Custom axes
+axis(1,
+     at     = ogive_x,
+     labels = c("0", "30", "60", "120", "400+"),
+     col    = "gray60", col.axis = "gray20", cex.axis = 0.95)
+axis(2,
+     at     = seq(0, 100, by = 25),
+     labels = paste0(seq(0, 100, by = 25), "%"),
+     las    = 1,
+     col    = "gray60", col.axis = "gray20", cex.axis = 0.9)
+
+# Data point labels
+text(ogive_x[-1], ogive_y[-1],
+     labels = paste0(ogive_y[-1], "%"),
+     pos    = 3,
+     cex    = 0.85,
+     col    = "steelblue",
+     font   = 2)
+
+# Reference line at 50% median marker
+abline(h   = 50,
+       col = "tomato", lty = 3, lwd = 1.5)
+text(x      = 410,
+     y      = 52,
+     labels = "50%",
+     col    = "tomato",
+     cex    = 0.85,
+     font   = 2)
+
+# Title and axis labels
+title(main     = "Ogive: Time Gap Between Drinking vs Dehydration Frequency",
+      cex.main = 1.25, font.main = 2, col.main = "gray15", line = 2.5)
+mtext("Time Gap Between Drinking (minutes)", side = 1, line = 4,   cex = 1.0, col = "gray30")
+mtext("Cumulative Percentage of Students (%)", side = 2, line = 3.8, cex = 1.0, col = "gray30")
+
+# Interval bracket labels on x-axis
+mtext(tg_labels, side = 1, line = 5,
+      at     = c(15, 45, 90, 260),
+      cex    = 0.78, col = "gray40")
+
+# Reset margins
+par(mar = c(5, 4, 4, 2))
